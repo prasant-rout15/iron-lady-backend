@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Iron Lady Lead Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        *{box-sizing:border-box;font-family:'Poppins',sans-serif}
+
+        body{
+            margin:0;
+            padding:40px;
+            background:#f1f5f9;
+        }
+
+        h2{
+            text-align:center;
+            color:#ff4b6e;
+            margin-bottom:35px;
+        }
+
+        .container{
+            max-width:1300px;
+            margin:auto;
+        }
+
+        .lead-card{
+            background:white;
+            border-radius:12px;
+            padding:20px 25px;
+            margin-bottom:18px;
+            box-shadow:0 8px 20px rgba(0,0,0,0.06);
+            display:grid;
+            grid-template-columns:60px 140px 160px 160px 1fr 160px 200px;
+            align-items:center;
+            gap:15px;
+            border-left:6px solid #ff4b6e;
+        }
+
+        .header{
+            font-weight:600;
+            color:#555;
+            margin-bottom:12px;
+            padding-left:6px;
+            display:grid;
+            grid-template-columns:60px 140px 160px 160px 1fr 160px 200px;
+        }
+
+        .program{
+            font-size:13px;
+            color:#444;
+            line-height:1.6;
+        }
+
+        select{
+            padding:6px;
+            border-radius:6px;
+            border:1px solid #ccc;
+        }
+
+        .btn{
+            padding:7px 14px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:600;
+            color:white;
+        }
+
+        .save-btn{
+            background:#22c55e;
+        }
+
+        .save-btn.saved{
+            background:#16a34a;
+        }
+
+        .delete-btn{
+            background:#ef4444;
+        }
+
+        .delete-btn:hover{
+            background:#dc2626;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Iron Lady Lead Management</h2>
+
+<div class="container">
+
+    <div class="header">
+        <div>ID</div>
+        <div>Role</div>
+        <div>Struggle</div>
+        <div>Goal</div>
+        <div>Program</div>
+        <div>Status</div>
+        <div>Action</div>
+    </div>
+
+    <div id="leadContainer"></div>
+
+</div>
+
+<script>
+function loadLeads(){
+    fetch("/api/leads")
+    .then(res=>res.json())
+    .then(data=>{
+        let rows="";
+        data.forEach(l=>{
+            rows+=`
+            <div class="lead-card">
+                <div>${l.id}</div>
+                <div>${l.role}</div>
+                <div>${l.struggle}</div>
+                <div>${l.goal}</div>
+                <div class="program">${l.recommendedProgram}</div>
+
+                <div>
+                    <select id="status-${l.id}">
+                        <option ${l.status=='NEW'?'selected':''}>NEW</option>
+                        <option ${l.status=='CONTACTED'?'selected':''}>CONTACTED</option>
+                        <option ${l.status=='INTERESTED'?'selected':''}>INTERESTED</option>
+                        <option ${l.status=='ENROLLED'?'selected':''}>ENROLLED</option>
+                        <option ${l.status=='REJECTED'?'selected':''}>REJECTED</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button class="btn save-btn" id="btn-${l.id}" onclick="updateStatus(${l.id})">Save</button>
+                    <button class="btn delete-btn" onclick="deleteLead(${l.id})">Remove</button>
+                </div>
+            </div>`;
+        });
+        document.getElementById("leadContainer").innerHTML=rows;
+    });
+}
+
+function updateStatus(id){
+    let status = document.getElementById("status-"+id).value;
+
+    fetch(`/api/leads/${id}?status=${status}`,{
+        method:"PUT"
+    })
+    .then(()=>{
+        let btn = document.getElementById("btn-"+id);
+        btn.innerText="Saved";
+        btn.classList.add("saved");
+    });
+}
+
+function deleteLead(id){
+    if(confirm("Remove this lead from dashboard?")){
+        fetch(`/api/leads/${id}`,{ method:"DELETE" })
+        .then(()=> loadLeads());
+    }
+}
+
+loadLeads();
+</script>
+
+</body>
+</html>
